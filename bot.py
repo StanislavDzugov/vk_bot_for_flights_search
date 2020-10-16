@@ -4,6 +4,7 @@ import vk_api
 from vk_api.bot_longpoll import VkBotLongPoll, VkBotEventType
 import logging
 import handlers
+from models import UserState, Ticket
 try:
     import settings
 except ImportError:
@@ -23,14 +24,6 @@ def configure_logging():
     file_handler.setLevel(logging.DEBUG)
 
 
-class UserState:
-    """User state in scenario"""
-
-    def __init__(self, scenario_name, step_name, context=None):
-        self.scenario_name = scenario_name
-        self.step_name = step_name
-        self.context = context or {}
-
 
 class Bot:
     """
@@ -48,7 +41,6 @@ class Bot:
         self.vk = vk_api.VkApi(token=self.token)
         self.long_poller = VkBotLongPoll(self.vk, self.group_id)
         self.api = self.vk.get_api()
-        self.user_states = dict()  # user id -> states
 
     def run(self):
         """Запуск бота"""
@@ -58,6 +50,7 @@ class Bot:
             except Exception as err:
                 log.exception('error')
 
+    @db_session
     def on_event(self, event):
         """
         :param event: VkBotMessageEvent object
@@ -69,8 +62,9 @@ class Bot:
 
         user_id = event.object.peer_id
         text = event.object.text
-        if user_id in self.user_states:
-            text_to_send = self.continue_scenario(user_id, text=text)
+        state = UserState.get(user_id=str(user_id))
+        if state is not None:
+            text_to_send = self.continue_scenario(text=text, state=state)
         else:
             # search intent
             for intent in settings.INTENTS:
@@ -84,7 +78,6 @@ class Bot:
             else:
                 text_to_send = settings.DEFAULT_ANSWER
 
-
         self.api.messages.send(
             message=text_to_send,
             random_id=randint(0, 2 ** 20),
@@ -96,11 +89,10 @@ class Bot:
         first_step = scenario['first_step']
         step = scenario['steps'][first_step]
         text_to_send = step['text']
-        self.user_states[user_id] = UserState(scenario_name=scenario_name, step_name=first_step)
+        UserState(user_id=str(user_id), scenario_name=scenario_name, step_name=first_step, context={})
         return text_to_send
 
-    def continue_scenario(self, user_id, text):
-        state = self.user_states[user_id]
+    def continue_scenario(self, text, state):
         steps = settings.SCENARIOS[state.scenario_name]['steps']
         step = steps[state.step_name]
         handler = getattr(handlers, step['handler'])
@@ -112,11 +104,15 @@ class Bot:
                 # switch to the next step
                 state.step_name = step['next_step']
             else:
-                # finish scenario
-                self.user_states.pop(user_id)
+                # finish scenario)
                 log.info(state.context)
+                Ticket(departure_airport=state.context['departure_airport'],
+                       arrival_airport=state.context['arrival_airport'],
+                       date=state.context['date'])
+                state.delete()
+
         else:
-             # retry current step
+            # retry current step
             text_to_send = step['failure_text'].format(**state.context)
         return text_to_send
 
