@@ -1,12 +1,25 @@
 from copy import deepcopy
 from unittest import TestCase
 from unittest.mock import patch, Mock, ANY
+
+from pony.orm import db_session, rollback
 from vk_api.bot_longpoll import VkBotMessageEvent
 from bot import Bot
+
 try:
     import settings
 except ImportError:
     exit('DO cp settings.py.default settings.py and set token')
+
+
+def isolate_db(test_func):
+    def wrapper(*args, **kwargs):
+        with db_session:
+            test_func(*args, **kwargs)
+            rollback()
+
+    return wrapper
+
 
 class Test1(TestCase):
     RAW_EVENT = {'type': 'message_new', 'object':
