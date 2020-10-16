@@ -42,13 +42,13 @@ SCENARIOS = {
             'step1': {
                 'text': 'Please enter the name of the departure airport',
                 'failure_text': 'Incorrect name, try again',
-                'handler': 'handle_name',
+                'handler': 'handle_dep_airport',
                 'next_step': 'step2'
             },
             'step2': {
                 'text': 'Please enter the name of the arrival airport',
                 'failure_text': 'Incorrect name, try again',
-                'handler': 'handle_name',
+                'handler': 'handle_arrival_airport',
                 'next_step': 'step3'
             },
             'step3': {
@@ -70,3 +70,11 @@ SCENARIOS = {
 
 
 DEFAULT_ANSWER = 'I have no ideas what you asked about'
+
+DB_CONFIG = dict(
+    provider='postgres',
+    user='postgres',
+    host='localhost',
+    database='vk_chat_bot',
+    password=''
+)
