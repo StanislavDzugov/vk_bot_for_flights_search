@@ -1,0 +1,72 @@
+GROUP_ID = 198143547
+TOKEN = ''
+TOKEN_AVIASALES = ''
+
+INTENTS = [
+    {
+        'name': 'greeting',
+        'tokens': ("hi", "how are you", "is anyone there?", "hello", "good day"),
+        'scenario': None,
+        'answer': 'Hello! How are you?'
+    },
+    {
+        'name': 'goodbye',
+        'tokens': ("bye", "see you later", "goodbye"),
+        'scenario': None,
+        'answer': 'See you later, thanks for visiting!'
+    },
+    {
+        'name': 'thanks',
+        'tokens': ("thanks", "thank you"),
+        'scenario': None,
+        'answer': 'Good!'
+    },
+    {
+        'name': 'Ticket search',
+        'tokens': '/ticket',
+        'scenario': 'flight_search',
+        'answer': None
+    },
+    {
+        'name': 'help',
+        'tokens': '/help',
+        'scenario': None,
+        'answer': None
+    }
+]
+
+SCENARIOS = {
+    'flight_search': {
+        'first_step': 'step1',
+        'steps': {
+            'step1': {
+                'text': 'Please enter the name of the departure airport',
+                'failure_text': 'Incorrect name, try again',
+                'handler': 'handle_name',
+                'next_step': 'step2'
+            },
+            'step2': {
+                'text': 'Please enter the name of the arrival airport',
+                'failure_text': 'Incorrect name, try again',
+                'handler': 'handle_name',
+                'next_step': 'step3'
+            },
+            'step3': {
+                'text': 'Please enter the date of the flight. Format YYYY-MM-DD',
+                'failure_text': 'Incorrect date, try again',
+                'handler': 'handle_date',
+                'next_step': 'step4'
+            },
+            'step4': {
+                'text': 'Data received successfully! We start searching for suitable flights',
+                'failure_text': None,
+                'handler': None,
+                'next_step': None
+            },
+
+        }
+    }
+}
+
+
+DEFAULT_ANSWER = 'I have no ideas what you asked about'
