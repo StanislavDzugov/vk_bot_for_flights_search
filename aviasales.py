@@ -1,6 +1,7 @@
 from pprint import pprint
 import json
 import requests
+import csv
 
 try:
     import settings
@@ -57,7 +58,7 @@ class TicketSearch:
         return response
 
     def convert_info(self, info):
-        if info is not None:
+        if info['success'] is True:
             flight_info = dict()
             for key, value in info['data'][self.destination].items():
                 flight_info[f'flight {key}'] = value
@@ -76,27 +77,31 @@ class TicketSearch:
                 if 'airline' in key1:
                     for iata_code, airlines in iata_airlines.items():
                         if iata_code in value1:
-                            value[key1] = f'Airline:{airlines}'
+                            value[key1] = airlines
                             break
                         else:
-                            value[key1] = f'Airline:{value1}'
+                            value[key1] = value1
                 if 'price' in key1:
-                    value[key1] = f'Price: {value1} RUB.'
+                    value[key1] = f'{value1} RUB.'
                 if 'departure_at' in key1:
                     value1 = value1.split('T')
-                    value[key1] = f'Departure date:{value1[0]}, Departure time: {value1[1][:-1]}'
-                if 'flight_number' in key1:
-                    value[key1] = f'Flight number:{value1}'
+                    value[key1] = f'{value1[0]}, time: {value1[1][:-1]}'
         return covnert_info
 
+    def save_xml_file(self):
+        convert_info = self.process_info_for_client()
+        with open('flights.csv', 'w', newline='') as csvfile:
+            header = ['Airline', 'Flight number', 'Departure info', 'Price']
+            writer = csv.DictWriter(csvfile, fieldnames=header)
+            writer.writeheader()
+            for key, value in convert_info.items():
+                writer.writerow({
+                    header[0]: value['airline'],
+                    header[1]: value['flight_number'],
+                    header[2]: value['departure_at'],
+                    header[3]: value['price'],
+                })
+
     def run(self):
-        pprint(self.process_info_for_client())
-
-
-ticket = TicketSearch('iata_codes_csv/airlines.csv',
-                      'iata_codes_csv/airport-codes.csv',
-                      'Sheremetyevo',
-                      'Dubai International',
-                      '2020-11-15')
-ticket.run()
+        self.save_xml_file()
 
