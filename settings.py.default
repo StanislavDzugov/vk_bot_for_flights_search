@@ -58,7 +58,8 @@ SCENARIOS = {
                 'next_step': 'step4'
             },
             'step4': {
-                'text': 'Data received successfully! We start searching for suitable flights',
+                'text': 'Data received successfully! We sent you a file with suitable flights',
+                'csvfile': 'generate_flight_file_handler',
                 'failure_text': None,
                 'handler': None,
                 'next_step': None
